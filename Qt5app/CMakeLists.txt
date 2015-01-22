@@ -13,4 +13,4 @@ qt5_wrap_ui(QAPP_UI_HEADERS ${UI_SRCS})
 
 
 add_executable(${EXECUTABLE_NAME} ${QAPP_SRC_LIST} ${QAPP_UI_HEADERS})
-target_link_libraries(${EXECUTABLE_NAME} Qt5::Widgets)
+target_link_libraries(${EXECUTABLE_NAME} Qt5::Widgets skttrain)
