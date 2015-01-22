@@ -1,4 +1,3 @@
-findq
 
 aux_source_directory(. LIB_SRC_LIST)
 
