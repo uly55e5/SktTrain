@@ -16,18 +16,18 @@ JackAudioClient::JackAudioClient()
     open();
 }
 
-JackAudioClient& JackAudioClient::getInstance()
+JackAudioClient*JackAudioClient::getInstance()
 {
     static JackAudioClient instance;
-    return instance;
+    return &instance;
 }
 
-void JackAudioClient::play()
+void JackAudioClient::playWav(const std::string &fileName)
 {
 
 }
 
-void JackAudioClient::record()
+void JackAudioClient::recordWav(const std::string &fileName)
 {
 
 }
@@ -37,14 +37,60 @@ void JackAudioClient::stop()
 
 }
 
+const AbstractAudioClient::StringList JackAudioClient::getAudioDevices(AbstractAudioClient::PortType type)
+{
+  std::cout << "Devices: " << std::endl;
+  int flags;
+  if(type==PortType::output)
+    flags=JackPortIsPhysical|JackPortIsInput;
+  else
+    flags=JackPortIsPhysical|JackPortIsOutput;
+  const char **ports;
+  ports = jack_get_ports (sJackClient, NULL, NULL,
+              flags);
+  if (ports == NULL)
+      throw std::exception();
+  StringList result;
+  int i=0;
+  while(const char * s=ports[i])
+    {
+      std::cout << i << " : " << s << std::endl;
+    result.push_back(s);
+    i++;
+    }
+    return result;
+
+}
+
+uint32_t JackAudioClient::sampleRate()
+{
+  jack_nframes_t sr =	jack_get_sample_rate (sJackClient);
+  std::cout << "Sample rate: " << sr << std::endl;
+  return (uint32_t)sr;
+}
+
+void JackAudioClient::connectToDevice(const std::string &targetDevice, AbstractAudioClient::PortType targetType)
+{
+  std::cout << "Connect to: " << targetDevice << std::endl;
+  jack_port_t *sourcePort;
+  if(targetType==PortType::output)
+    sourcePort=sOutputPort;
+  else
+    sourcePort=sInputPort;
+  if (jack_connect (sJackClient, targetDevice.c_str(), jack_port_name (sourcePort)))
+      throw std::exception();
+
+}
+
 JackAudioClient::~JackAudioClient()
 {
+
     close();
 }
 
 void JackAudioClient::open()
 {
-    const char **ports;
+    //const char **ports;
     const char *client_name = "skttrain";
     const char *server_name = nullptr;
     jack_options_t options = JackNullOption;
@@ -60,9 +106,6 @@ void JackAudioClient::open()
     // TODO set shutdown callback
     jack_on_shutdown (sJackClient, JackAudioClient::jack_shutdown, 0);
 
-    // TODO get sample rate
-    jack_nframes_t sr =	jack_get_sample_rate (sJackClient);
-    std::cout << "Sample rate: " << sr << std::endl;
 
     sInputPort = jack_port_register (sJackClient, "input",
                      JACK_DEFAULT_AUDIO_TYPE,
@@ -77,27 +120,6 @@ void JackAudioClient::open()
 
     if (jack_activate (sJackClient))
         throw std::exception();
-
-
-    ports = jack_get_ports (sJackClient, NULL, NULL,
-                JackPortIsPhysical|JackPortIsOutput);
-    if (ports == NULL)
-        throw std::exception();
-
-    if (jack_connect (sJackClient, ports[0], jack_port_name (sInputPort)))
-        throw std::exception();
-
-    delete ports;
-
-    ports = jack_get_ports (sJackClient, NULL, NULL,
-                JackPortIsPhysical|JackPortIsInput);
-    if (ports == NULL)
-        throw std::exception();
-
-    if (jack_connect (sJackClient, jack_port_name (sOutputPort), ports[0]))
-        throw std::exception();
-
-    delete ports;
 }
 
 void JackAudioClient::close()
@@ -107,7 +129,7 @@ void JackAudioClient::close()
 
 int JackAudioClient::process(jack_nframes_t nframes, void *arg)
 {
-    std::cout << nframes << "..." << arg;
+    //std::cout << nframes << "..." << arg;
     jack_default_audio_sample_t *in, *out;
 
     in = (jack_default_audio_sample_t*) jack_port_get_buffer (sInputPort, nframes);

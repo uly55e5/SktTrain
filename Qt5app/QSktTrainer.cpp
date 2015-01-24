@@ -9,6 +9,10 @@ int main(int argc, char* argv[])
   MainWindow mw;
   mw.show();
 
-  JackAudioClient c = JackAudioClient::getInstance();
+  AbstractAudioClient * c = JackAudioClient::getInstance();
+  AbstractAudioClient::StringList l = c->getAudioDevices(AbstractAudioClient::PortType::input);
+  c->connectToDevice(l[1],AbstractAudioClient::PortType::input);
+  c->getAudioDevices(AbstractAudioClient::PortType::output);
+
   return app->exec();
 }

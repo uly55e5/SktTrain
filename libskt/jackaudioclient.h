@@ -10,10 +10,16 @@ class JackAudioClient : public AbstractAudioClient
 private:
     JackAudioClient();
 public:
-    static JackAudioClient &getInstance();
-    void play();
-    void record();
+    static JackAudioClient * getInstance();
+    void playWav(const std::string& fileName);
+    void recordWav(const std::string& fileName);
     void stop();
+    const StringList getAudioDevices(PortType type);
+    uint32_t sampleRate();
+    void connectToDevice(const std::string& targetDevice, PortType targetType);
+
+
+
 
 
 
